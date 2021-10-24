@@ -10,6 +10,7 @@ itsdangerous==2.0.1
 Jinja2==3.0.2
 MarkupSafe==2.0.1
 promise==2.3
+PyYAML==6.0
 Rx==1.6.1
 six==1.16.0
 Werkzeug==2.0.2
