@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  firestore_be:
+    container_name: firestore_be
+    build: ~/sw/python/firestore_gui
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=main.py
+      - DEVELOPMENT=true
+    volumes: 
+      - ~/sw/python/firestore_gui:/usr/src/firestore_gui
+    ports: 
+      - "5000:5000"
+      - "8080:8080"

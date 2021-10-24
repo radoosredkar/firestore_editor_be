@@ -1,0 +1,3 @@
+environment: "PROD"
+url:
+    push: "europe-west2-web-collector-deploy-303917.cloudfunctions.net"
