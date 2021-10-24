@@ -2,6 +2,7 @@ import flask
 from app import app
 from flask_graphql import GraphQLView
 from application import schemas
+from config import settings
 
 app.add_url_rule(
     "/graphql",
@@ -11,7 +12,7 @@ app.add_url_rule(
 
 @app.route("/")
 def root():
-    return f"App is online ..."
+    return f"App is online ... (environment={settings.environment})"
 
 
 if __name__ == "__main__":
