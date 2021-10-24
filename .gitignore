@@ -1,3 +1,9 @@
+*.key
+AlembicDbUrl
+Dockerfile_DEV
+settings_DEV.yaml
+# venv
+firestore_gui_venv/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +133,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+*.log*
