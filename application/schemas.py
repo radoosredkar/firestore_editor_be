@@ -1,3 +1,4 @@
+import application.db_firestore
 import graphene
 from graphene import ObjectType, Mutation, String, Int, Field, List, Enum
 
