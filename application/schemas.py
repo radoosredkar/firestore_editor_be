@@ -1,18 +1,24 @@
-import application.db_firestore
+import application.db_firestore as db
 import graphene
 from graphene import ObjectType, Mutation, String, Int, Field, List, Enum
+from app import app
 
 
-class Collection(ObjectType):
+class FsColl(ObjectType):
     id = String()
     title = String()
+    value = String()
     description = String()
 
-    def __init__(self, Collections_dict, ident):
-        self.id = ident
-        for keys, values in Collections_dict.items():
-            # app.logger.info(keys + " " + str(values))
-            setattr(self, keys, values)
+    #    def __init__(self, coll_dict, ident):
+    #        self.id = ident
+    #        for keys, values in coll_dict.items():
+    #            # app.logger.info(keys + " " + str(values))
+    #            setattr(self, keys, values)
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            app.logger.info(f"{k}->{v}")
+            setattr(self, k, v)
 
     def resolve_id(self, info):
         return f"{self.id}"
@@ -20,16 +26,35 @@ class Collection(ObjectType):
     def resolve_title(self, info):
         return f"{self.title}"
 
+    def resolve_value(self, info):
+        return f"{self.value}"
+
     def resolve_description(self, info):
         return f"{self.description}"
 
 
 class Query(ObjectType):
-    fs_collection = graphene.Field(Collection, ident=String())
-    fs_collections = List(Collection)
+    fs_collection = graphene.Field(FsColl)
+    fs_collections = List(FsColl)
+    fs_collection_fields = List(FsColl)
+
+    def resolve_fs_collection_fields(self, info):
+        coll = FsColl(
+            coll_dict={"title": "title1", "description": "description1"}, ident=1
+        )
+        coll1 = FsColl(
+            coll_dict={"title": "title2", "description": "description2"}, ident=2
+        )
+        fs_coll_ref = db.get_collection("dev_col1")
+        fields = []
+        for field in fs_coll_ref:
+            fields_dict = field.to_dict()
+            for k, v in fields_dict.items():
+                fields.append(FsColl(id=1, title=k, description=fields_dict))
+        return fields
 
     def resolve_fs_collection(self, info, ident):
-        fs_col = Collection(
+        fs_col = FsColl(
             {"id": 2, "title": "title123", "description": "description123"}, "1"
         )
         return fs_col
@@ -46,7 +71,6 @@ class Query(ObjectType):
         #    Collection = Collection(Collection_dict, doc.id)
         #    if Collection.archived == archived:
         #        Collections.append(Collection)
-
         for i in range(10):
             fs_col = Collection(
                 {"id": i, "title": f"title{i}", "description": f"description{i}"}, "1"
