@@ -4,79 +4,66 @@ from graphene import ObjectType, Mutation, String, Int, Field, List, Enum
 from app import app
 
 
-class FsColl(ObjectType):
-    id = String()
-    title = String()
-    value = String()
-    description = String()
-
-    #    def __init__(self, coll_dict, ident):
-    #        self.id = ident
-    #        for keys, values in coll_dict.items():
-    #            # app.logger.info(keys + " " + str(values))
-    #            setattr(self, keys, values)
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            app.logger.info(f"{k}->{v}")
-            setattr(self, k, v)
-
-    def resolve_id(self, info):
-        return f"{self.id}"
-
-    def resolve_title(self, info):
-        return f"{self.title}"
-
-    def resolve_value(self, info):
-        return f"{self.value}"
-
-    def resolve_description(self, info):
-        return f"{self.description}"
+class CollectionsTypeSchema(graphene.Enum):
+    FIELD = "FIELD"
+    COLLECTION = "COLLECTION"
 
 
-class Query(ObjectType):
-    fs_collection = graphene.Field(FsColl)
-    fs_collections = List(FsColl)
-    fs_collection_fields = List(FsColl)
+class GcpField(ObjectType):
+    name = String()
+    type = CollectionsTypeSchema()
 
-    def resolve_fs_collection_fields(self, info):
-        coll = FsColl(
-            coll_dict={"title": "title1", "description": "description1"}, ident=1
-        )
-        coll1 = FsColl(
-            coll_dict={"title": "title2", "description": "description2"}, ident=2
-        )
-        fs_coll_ref = db.get_collection("dev_col1")
-        fields = []
-        for field in fs_coll_ref:
-            fields_dict = field.to_dict()
-            for k, v in fields_dict.items():
-                fields.append(FsColl(id=1, title=k, description=fields_dict))
-        return fields
+    def __init__(self, name, _type):
+        self.name = name
+        self.type = _type
 
-    def resolve_fs_collection(self, info, ident):
-        fs_col = FsColl(
-            {"id": 2, "title": "title123", "description": "description123"}, "1"
-        )
-        return fs_col
-        # doc_ref = db_firestore.get_document_ref(settings.collections.Collections, ident)
-        # return Collection(doc_ref.get().to_dict(), ident)
+    def resolve_name(self, info):
+        return "a"
 
-    def resolve_fs_collections(self, info):
-        # Collections_ref = db.collection(Collections_collection_name)
-        # docs = Collections_ref.stream()
-        collections = []
-        # for doc in docs:
-        #    Collection_dict = doc.to_dict()
-        #    # app.logger.info(Collection_dict)
-        #    Collection = Collection(Collection_dict, doc.id)
-        #    if Collection.archived == archived:
-        #        Collections.append(Collection)
-        for i in range(10):
-            fs_col = Collection(
-                {"id": i, "title": f"title{i}", "description": f"description{i}"}, "1"
+    def resolve_type(self, info):
+        return "b"
+
+
+def show_collection(name: str, depth: int):
+    docs = db.get_collection(name)
+    fields = []
+    for doc in docs:
+        fields_dict = doc.to_dict()
+        # Get collections
+        for collection_ref in doc.reference.collections():
+            fields.append(
+                GcpField(collection_ref.id, CollectionsTypeSchema.COLLECTION.value)
             )
-            collections.append(fs_col)
-        return collections
+            # pass
+        # Get fields
+        for k, v in fields_dict.items():
+            fields.append(GcpField(k, CollectionsTypeSchema.FIELD.value))
+    return fields
 
 
-schema = graphene.Schema(query=Query)
+def create_schema():
+    fields = Field(GcpField)
+
+    def resolve_fields(self, info):
+        flds = show_collection("dev_col2", 1)
+        return flds[0]
+
+    def make_resolver(rec_name, rec_cls):
+        def resolver(self, info):
+            return f"Record is {rec_name}"
+
+        resolver.__name__ = f"resolve_{rec_name}"
+        return resolver
+
+    fields_dict = {}
+    fields_dict["fields"] = graphene.String()
+    fields_dict["resolve_fields"] = resolve_fields
+    fields = show_collection("dev_col1", 1)
+    #    for f in fields:
+    #        fields_dict[str(f)] = graphene.String()
+    #        fields_dict[f"resolve_{str(f)}"] = make_resolver(str(f), String)
+    Query = type("Query", (graphene.ObjectType,), fields_dict,)
+    return graphene.Schema(query=Query)
+
+
+schema = create_schema()
