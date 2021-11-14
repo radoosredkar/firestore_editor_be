@@ -2,14 +2,15 @@
 Basic GUI for gcp firestore BE
 
 TODO:
-- Update field action
 - Delete field action
 - Add collection action
 - Update collection action
 - Delete collection action
 
 IN PROGRESS
+- Add mutations
 - Add field action
+- Update field action
 
 DONE
 - Set structure for collections schema

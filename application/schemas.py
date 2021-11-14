@@ -65,8 +65,37 @@ def show_collection(name: str, depth: int):
     return fields
 
 
+class UpdateCollection(Mutation):
+    class Arguments:
+        collection_name = String()
+        document_id = String()
+        field_name = String()
+        field_value = String()
+
+    gcpField = graphene.Field(GcpField)
+
+    def mutate(self, info, collection_name, document_id, field_name, field_value):
+        app.logger.info("Updating collection %s", collection_name)
+        update_dict = {field_name: field_value}
+        app.logger.info(
+            "Sending update dict %s to document %s", update_dict, document_id
+        )
+
+        doc_ref = db.get_document_ref(collection_name, document_id)
+        doc = doc_ref.get()
+        if doc.exists:
+            db.update_document(doc_ref, update_dict)
+            gcpField = GcpField(
+                field_name, CollectionsTypeSchema.FIELD.value, document_id
+            )
+        else:
+            gcpField = None
+        return UpdateCollection(gcpField)
+
+
 def create_schema():
     fields = List(GcpField)
+    updateCollection = UpdateCollection.Field()
 
     def make_resolver(rec_name, rec_cls):
         def resolver(self, info):
@@ -78,12 +107,13 @@ def create_schema():
     fields_dict = {}
     fields_dict["fields"] = fields
     fields_dict["resolve_fields"] = make_resolver("fields", fields)
-    # fields = show_collection("dev_col1", 1)
-    #    for f in fields:
-    #        fields_dict[str(f)] = graphene.String()
-    #        fields_dict[f"resolve_{str(f)}"] = make_resolver(str(f), String)
+
     Query = type("Query", (graphene.ObjectType,), fields_dict,)
-    return graphene.Schema(query=Query)
+
+    fields_dict = {}
+    fields_dict["updateCollection"] = UpdateCollection.Field()
+    Mutation = type("Mutation", (graphene.ObjectType,), fields_dict,)
+    return graphene.Schema(query=Query, mutation=Mutation)
 
 
 schema = create_schema()
