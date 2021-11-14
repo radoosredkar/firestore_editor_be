@@ -4,7 +4,6 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import os
-from app import app
 
 if os.environ.get("DEVELOPMENT"):
     cred = credentials.Certificate(
@@ -20,6 +19,7 @@ else:
     db = firestore.client()
 
 def get_collections():
+    app.logger.info(db.__dict__)
     return db.collections()
 
 

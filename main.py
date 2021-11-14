@@ -22,7 +22,8 @@ def test():
     coll = db.get_collection("dev_col2")
     rs = ""
     for c in colls:
-        rs = rs + str((c.get()[0]))
+        for doc in c.get():
+            app.logger.info(f"{doc.__dict__}")
     return rs
 
 
