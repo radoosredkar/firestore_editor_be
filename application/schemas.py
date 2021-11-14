@@ -11,6 +11,12 @@ class CollectionsTypeSchema(graphene.Enum):
     COLLECTION = "COLLECTION"
 
 
+class CRUDEnum(graphene.Enum):
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+
+
 class GcpField(ObjectType):
     parents = String()
     name = String()
@@ -71,25 +77,49 @@ class UpdateCollection(Mutation):
         document_id = String()
         field_name = String()
         field_value = String()
+        crud_action = CRUDEnum()
 
     gcpField = graphene.Field(GcpField)
 
-    def mutate(self, info, collection_name, document_id, field_name, field_value):
-        app.logger.info("Updating collection %s", collection_name)
-        update_dict = {field_name: field_value}
-        app.logger.info(
-            "Sending update dict %s to document %s", update_dict, document_id
-        )
-
-        doc_ref = db.get_document_ref(collection_name, document_id)
-        doc = doc_ref.get()
-        if doc.exists:
-            db.update_document(doc_ref, update_dict)
-            gcpField = GcpField(
-                field_name, CollectionsTypeSchema.FIELD.value, document_id
+    def mutate(
+        self,
+        info,
+        collection_name,
+        document_id,
+        field_name,
+        field_value,
+        crud_action: CRUDEnum,
+    ):
+        app.logger.info("Updating collection %s, %s", collection_name, crud_action)
+        if crud_action == CRUDEnum.CREATE or crud_action == CRUDEnum.UPDATE:
+            update_dict = {field_name: field_value}
+            app.logger.info(
+                "Sending update dict %s to document %s", update_dict, document_id
             )
+
+            doc_ref = db.get_document_ref(collection_name, document_id)
+            doc = doc_ref.get()
+            if doc.exists:
+                db.update_document(doc_ref, update_dict)
+                gcpField = GcpField(
+                    field_name, CollectionsTypeSchema.FIELD.value, document_id
+                )
+            else:
+                gcpField = None
+        elif crud_action == CRUDEnum.DELETE:
+            app.logger.info(
+                "Deleting %s field from document %s", field_name, document_id
+            )
+
+            doc_ref = db.get_document_ref(collection_name, document_id)
+            doc = doc_ref.get()
+            if doc.exists:
+                db.delete_field(doc_ref, field_name)
+                gcpField = GcpField(
+                    field_name, CollectionsTypeSchema.FIELD.value, document_id
+                )
         else:
-            gcpField = None
+            raise ValueError("Invalid CRUD Action")
         return UpdateCollection(gcpField)
 
 

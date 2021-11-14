@@ -18,6 +18,7 @@ else:
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 
+
 def get_collections():
     app.logger.info(db.__dict__)
     return db.collections()
@@ -45,6 +46,14 @@ def update_document(doc_ref, field_dict: dict):
     if doc_ref.get().exists:
         app.logger.debug(f"Applying updates {field_dict}")
         doc_ref.update(field_dict)
+    else:
+        raise FileNotFoundError(f"Document not found")
+
+
+def delete_field(doc_ref, field_name: str):
+    if doc_ref.get().exists:
+        app.logger.debug(f"Deleting field {field_name}")
+        doc_ref.update({field_name: firestore.DELETE_FIELD})
     else:
         raise FileNotFoundError(f"Document not found")
 
