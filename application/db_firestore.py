@@ -3,17 +3,20 @@ import datetime
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from config import settings
 import os
 
 if os.environ.get("DEVELOPMENT"):
     cred = credentials.Certificate(
-        "firebasegui-firebase-adminsdk-lpxg1-236a6b0926.json"
+        settings.login.certificate_file
     )
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 else:
+    app.logger.info("*****************************" +
+                    settings.login.certificate_file)
     cred = credentials.Certificate(
-        "firebasegui-firebase-adminsdk-lpxg1-236a6b0926.json"
+        settings.login.certificate_file
     )
     firebase_admin.initialize_app(cred)
     db = firestore.client()

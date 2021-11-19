@@ -3,6 +3,7 @@ firebasegui-firebase-adminsdk-lpxg1-236a6b0926.json
 AlembicDbUrl
 Dockerfile_DEV
 settings_DEV.yaml
+certificates/*
 # venv
 firestore_gui_venv/*
 # Byte-compiled / optimized / DLL files
