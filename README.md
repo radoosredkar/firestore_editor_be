@@ -7,9 +7,10 @@ TODO:
 - Delete collection action
 
 IN PROGRESS
-- Delete field action
+- Add main collection choosing
 
 DONE
+- Delete field action
 - Set structure for collections schema
 - Add field type to the schema
 - Rething tree structure of the collections (coll1->[f1, coll2, f2[f3, f4, coll3] ...] 

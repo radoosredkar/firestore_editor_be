@@ -42,11 +42,11 @@ def show_document_fields(doc):
     fields = []
     fields_dict = doc.to_dict()
     for collection_ref in doc.reference.collections():
-        app.logger.info(
-            "loop collections  in doc.id=%s collection_ref=%s",
-            doc.id,
-            collection_ref.id,
-        )
+        #        app.logger.info(
+        #            "loop collections  in doc.id=%s collection_ref=%s",
+        #            doc.id,
+        #            collection_ref.id,
+        #        )
         fields.append(
             GcpField(collection_ref.id, CollectionsTypeSchema.COLLECTION.value, doc.id)
         )
@@ -55,17 +55,28 @@ def show_document_fields(doc):
             fields += show_document_fields(subdoc)
     # Get fields
     for k, v in fields_dict.items():
-        app.logger.info("loop field_dict  k=%s v=%s", k, v)
+        # app.logger.info("loop field_dict  k=%s v=%s", k, v)
         fields.append(GcpField(k, CollectionsTypeSchema.FIELD.value, doc.id))
     return fields
 
 
+def add_collection(name: str):
+    coll_ref: google.cloud.firestore_v1.collection.CollectionReference = db.get_collection_ref(
+        name
+    )
+    coll_ref.document("test").set({"id": 22})
+    test_doc = db.get_document_ref(name, "test")
+    coll_ref = test_doc.collection("test_col")
+    coll_ref.document().set({"test": 24})
+
+
 def show_collection(name: str, depth: int):
+
     docs = db.get_collection(name)
     fields = []
-    app.logger.info("Call show_collection name:%s depth:%s", name, depth)
+    # app.logger.info("Call show_collection name:%s depth:%s", name, depth)
     for doc in docs:
-        app.logger.info("loop docs doc.id=%s", doc.id)
+        # app.logger.info("loop docs doc.id=%s", doc.id)
         fields.append(GcpField(doc.id, CollectionsTypeSchema.DOCUMENT.value, name))
         fields += show_document_fields(doc)
     return fields
@@ -118,12 +129,16 @@ class UpdateCollection(Mutation):
                 gcpField = GcpField(
                     field_name, CollectionsTypeSchema.FIELD.value, document_id
                 )
+            else:
+                gcpField = None
+
         else:
             raise ValueError("Invalid CRUD Action")
         return UpdateCollection(gcpField)
 
 
 def create_schema():
+    listCollectionFields = List(GcpField, collection_name=String())
     fields = List(GcpField)
     updateCollection = UpdateCollection.Field()
 
@@ -134,9 +149,14 @@ def create_schema():
         resolver.__name__ = f"resolve_{rec_name}"
         return resolver
 
+    def resolve_listCollectionFields(self, info, collection_name):
+        return show_collection(collection_name, 1)
+
     fields_dict = {}
     fields_dict["fields"] = fields
     fields_dict["resolve_fields"] = make_resolver("fields", fields)
+    fields_dict["listCollectionFields"] = listCollectionFields
+    fields_dict["resolve_listCollectionFields"] = resolve_listCollectionFields
 
     Query = type("Query", (graphene.ObjectType,), fields_dict,)
 

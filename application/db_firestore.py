@@ -7,17 +7,11 @@ from config import settings
 import os
 
 if os.environ.get("DEVELOPMENT"):
-    cred = credentials.Certificate(
-        settings.login.certificate_file
-    )
+    cred = credentials.Certificate(settings.login.certificate_file)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 else:
-    app.logger.info("*****************************" +
-                    settings.login.certificate_file)
-    cred = credentials.Certificate(
-        settings.login.certificate_file
-    )
+    cred = credentials.Certificate(settings.login.certificate_file)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 
@@ -25,6 +19,11 @@ else:
 def get_collections():
     app.logger.info(db.__dict__)
     return db.collections()
+
+
+def get_collection_ref(collection_name):
+    app.logger.info(collection_name)
+    return db.collection(collection_name)
 
 
 def get_collection(collection_name):
