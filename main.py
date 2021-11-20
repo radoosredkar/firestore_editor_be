@@ -4,6 +4,7 @@ from flask_graphql import GraphQLView
 from application import schemas
 from config import settings
 import application.db_firestore as db
+import application.schemas
 
 app.add_url_rule(
     "/graphql",
@@ -14,17 +15,13 @@ app.add_url_rule(
 @app.route("/")
 def root():
     return f"App is online ... (environment={settings.environment})"
+    flask.g.root_collection = "dev_col1"
 
 
-@app.route("/test")
-def test():
-    colls = db.get_collections()
-    coll = db.get_collection("dev_col2")
-    rs = ""
-    for c in colls:
-        for doc in c.get():
-            app.logger.info(f"{doc.__dict__}")
-    return rs
+@app.route("/reload")
+def reload():
+    schemas.create_schema("dev_col2")
+    return "Schema reloaded OK"
 
 
 if __name__ == "__main__":
